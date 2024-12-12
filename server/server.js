@@ -10,4 +10,8 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors({ Credential: true }));
 
+app.get('/', (req, res) => { 
+    res.send("API WORKING!");
+})
+
 app.listen(port, () => console.log(`Server listening on ${port}`));
