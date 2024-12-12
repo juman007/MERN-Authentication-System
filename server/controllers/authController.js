@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
+import transporter from "../config/nodeMailer.js";
 
 // Register a new user
 export const register = async (req, res) => {
@@ -38,6 +39,16 @@ export const register = async (req, res) => {
          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", // Adjust same-site settings based on environment
          maxAge: 7 * 24 * 60 * 60 * 1000, // Token expiry time in milliseconds
       });
+
+      // sending wellcome email
+      const mailOptions = {
+         from: process.env.SENDER_EMAIL,
+         to: email,
+         subject: "Welcome to My Website!",
+         text: `Thank you for registering on our website! Your account has been created successfully with email id:${email}.`,
+      };
+
+      await transporter.sendMail(mailOptions);
 
       // Respond with success message
       res.json({ success: true, message: "User registered successfully" });
