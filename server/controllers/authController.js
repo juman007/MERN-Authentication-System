@@ -58,6 +58,7 @@ export const register = async (req, res) => {
    }
 };
 
+// Login a user
 export const login = async (req, res) => {
    const { email, password } = req.body;
 
@@ -105,6 +106,7 @@ export const login = async (req, res) => {
    }
 };
 
+// Logout a user
 export const logout = async (req, res) => {
    try {
       // Clear the token cookie
