@@ -123,3 +123,98 @@ export const logout = async (req, res) => {
       res.json({ success: false, message: error.message });
    }
 };
+
+// Send a verification OTP to the user's registered email
+export const sendVerifyOtp = async (req, res) => {
+   try {
+      const { userId } = req.body;
+
+      const user = await userModel.findById(userId);
+
+      // Check if the user's account is already verified
+      if (user.IsAccountVerified) {
+         return res.json({
+            success: false,
+            message: "Account is already verified",
+         });
+      }
+
+      // Generate a random 6-digit verification OTP
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+
+      // Set the OTP and its expiration time in the user's database record
+      user.verifyOtp = otp;
+      user.verifyOtpExpiredAt = Date.now() + 24 * 60 * 60 * 1000; // OTP expires in 24 hours
+
+      await user.save();
+
+      // Prepare email options for sending the OTP
+      const mailOptions = {
+         from: process.env.SENDER_EMAIL, // Sender's email address from environment variables
+         to: user.email, // Recipient's email address
+         subject: "Account Verification OTP", // Email subject
+         text: `Your OTP is ${otp}. Verify your account using this OTP.`, // Email content
+      };
+
+      // Send the OTP email to the user
+      await transporter.sendMail(mailOptions);
+
+      res.json({ success: true, message: "Verification OTP sent on Email" });
+   } catch (error) {
+      // Handle any errors and send a failure response
+      res.json({ success: false, message: error.message });
+   }
+};
+
+// Verify the user's email using the provided OTP
+export const verifyEmail = async (req, res) => {
+   const { userId, otp } = req.body;
+
+   // Check if userId or OTP is missing from the request
+   if (!userId || !otp) {
+      return res.json({ success: false, message: "Missing details" });
+   }
+
+   try {
+      // Fetch the user details from the database using the userId
+      const user = await userModel.findById(userId);
+
+      // If user is not found in the database, return an error response
+      if (!user) {
+         return res.json({
+            success: false,
+            message: "User not found",
+         });
+      }
+
+      // Check if the provided OTP matches the one stored in the database
+      if (user.verifyOtp === " " || user.verifyOtp !== otp) {
+         return res.json({
+            success: false,
+            message: "Invalid OTP",
+         });
+      }
+
+      // Check if the OTP has expired
+      if (user.verifyOtpExpiredAt < Date.now()) {
+         return res.json({
+            success: false,
+            message: "OTP expired",
+         });
+      }
+
+      // Mark the user's account as verified
+      user.IsAccountVerified = true;
+
+      // Clear the OTP and its expiration time from the user's database record
+      user.verifyOtp = "";
+      user.verifyOtpExpiredAt = 0;
+
+      await user.save();
+
+      res.json({ success: true, message: "Email verified successfully" });
+   } catch (error) {
+      // Handle any errors and send a failure response
+      res.json({ success: false, message: error.message });
+   }
+};
