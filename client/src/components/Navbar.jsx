@@ -20,7 +20,9 @@ const Navbar = () => {
 
          if (data.success) {
             navigate("/email-verify");
-            toast.success("Verification OTP sent on Email");
+            toast.success(data.message);
+         } else {
+            toast.error(data.message);
          }
       } catch (error) {
          toast.error(error.message);
@@ -61,7 +63,10 @@ const Navbar = () => {
                    bg-gray-100 text-sm"
                   >
                      {!user.IsAccountVerified && (
-                        <li className="py-1 px-2 hover:bg-gray-200 cursor-pointer">
+                        <li
+                           onClick={sendVerificationOtp}
+                           className="py-1 px-2 hover:bg-gray-200 cursor-pointer"
+                        >
                            Verify email
                         </li>
                      )}
